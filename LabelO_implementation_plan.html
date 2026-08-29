@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabelO API 연동 및 라벨러/데이터 관리 시스템 종합 구현 계획 및 명세</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --bg-color: #f4f7f6;
+            --text-color: #333333;
+            --border-color: #e0e6ed;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 50px 60px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: var(--primary-color);
+            border-bottom: 4px solid var(--accent-color);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        h2 {
+            color: var(--primary-color);
+            margin-top: 45px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            font-size: 1.6em;
+        }
+        h3 {
+            color: var(--secondary-color);
+            margin-top: 30px;
+            font-size: 1.3em;
+        }
+        h4 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul {
+            margin-bottom: 20px;
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            padding: 14px 15px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+        th {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fbfc;
+        }
+        code {
+            font-family: Consolas, Monaco, "Andale Mono", monospace;
+            background-color: #f1f3f5;
+            padding: 3px 6px;
+            border-radius: 4px;
+            color: #d63384;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #272822;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: Consolas, Monaco, "Andale Mono", monospace;
+            line-height: 1.5;
+            font-size: 0.95em;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: #7f8c8d;
+            font-size: 0.9em;
+            text-align: right;
+            font-style: italic;
+        }
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .emoji {
+            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LabelO API 연동 및 라벨러/데이터 관리 시스템 종합 구현 계획 및 명세</h1>
+        
+        <p>본 문서는 <strong>LabelO REST API 연동 클라이언트, 대화형 CLI 도구, 백엔드 멀티테넌시 버그 수정, 데이터 Import/Export/다운로드 시스템</strong>의 최종 구현 계획 및 명세서입니다.</p>
+
+        <h2>1. 구현 목표 및 핵심 구성요소</h2>
+        <ul>
+            <li><strong>외부 API 클라이언트 라이브러리 (<code><a href="file:///d:/_Dev/labelo_API/labelo_api_client.py">labelo_api_client.py</a></code>)</strong>:
+                <ul>
+                    <li>세션 로그인 기반 API Token 자동 발급 및 지속 인증</li>
+                    <li>조직(Organization), 사용자(User), 프로젝트(Project), 멤버(Labeler), 태스크 데이터(Import/Export/Download) 통합 제어</li>
+                </ul>
+            </li>
+            <li><strong>대화형 콘솔 인터페이스 (<code>LabeloCLI</code>)</strong>:
+                <ul>
+                    <li>메뉴 1~15번을 통한 직관적인 콘솔 UI (컬러 출력, 테이블 포맷, 실시간 프로그레스 바)</li>
+                </ul>
+            </li>
+            <li><strong>스크립트형 CLI 도구 (<code><a href="file:///d:/_Dev/labelo_API/labelo_api_example.py">labelo_api_example.py</a></code>)</strong>:
+                <ul>
+                    <li>서브커맨드 기반 자동화 및 배치 처리 지원</li>
+                </ul>
+            </li>
+            <li><strong>백엔드 소스코드 개선 및 무결성 확보</strong>:
+                <ul>
+                    <li>조직 멤버십 동기화, 사용자 조회 쿼리 최적화, 프론트엔드 다중 그룹 호환성 수정</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>2. 세부 구현 내역</h2>
+
+        <h3>2.1 API 클라이언트 코어 (<code>LabeloAPIClient</code>)</h3>
+
+        <h4><span class="emoji">🔐</span> 인증 및 사용자/조직 관리</h4>
+        <ul>
+            <li><code>login(email, password)</code>: 로그인 페이지에서 CSRF 토큰을 추출하고 세션 인증을 거쳐 API Token 획득</li>
+            <li><code>login_with_token(token)</code>: 발급된 토큰으로 직접 클라이언트 인증</li>
+            <li><code>get_whoami()</code>: 현재 로그인된 사용자의 ID, 이름, 이메일, 활성 조직(<code>active_organization</code>) 정보 조회</li>
+            <li><code>list_users()</code>: 현재 조직에 속한 사용자 목록 조회</li>
+            <li><code>update_user(user_id, **kwargs)</code>: 사용자 정보 및 소속 조직 수정</li>
+            <li><code>delete_user(user_id, organization_id=None)</code>: 사용자 계정 삭제 또는 조직 멤버십 해제</li>
+            <li><code>remove_organization_member(organization_id, user_id)</code>: 조직에서 멤버십 제거 (Soft Delete)</li>
+            <li><code>register_user(email, password, username, org_name)</code>: 독립 조직을 가진 신규 계정 가입</li>
+            <li><code>invite_user(email, password, username, role)</code>: 현재 관리자 조직에 사용자 가입/초대 및 소속 전환</li>
+            <li><code>update_organization_member_role(org_id, user_id, role)</code>: 조직 내 역할(annotater, reviewer, manager 등) 변경 및 <code>status='active'</code> 활성화</li>
+        </ul>
+
+        <h4><span class="emoji">📁</span> 프로젝트 관리</h4>
+        <ul>
+            <li><code>list_projects(page, page_size)</code>: 프로젝트 목록 조회</li>
+            <li><code>get_project(project_id)</code>: 프로젝트 상세 정보 조회</li>
+            <li><code>create_project(title, description="")</code>: <strong>프로젝트 이름만 입력하여 즉시 생성</strong> (웹 인터페이스 설정 URL 안내)</li>
+        </ul>
+
+        <h4><span class="emoji">👥</span> 프로젝트 멤버(라벨러) 관리</h4>
+        <ul>
+            <li><code>get_project_members(project_id)</code>: 프로젝트에 등록된 라벨러 목록 조회</li>
+            <li><code>get_available_users(project_id)</code>: 프로젝트에 아직 등록되지 않은 추가 가능 사용자 조회</li>
+            <li><code>add_labeler(project_id, user_id)</code>: 프로젝트에 라벨러 1명 등록</li>
+            <li><code>add_labelers_bulk(project_id, user_ids)</code>: 여러 사용자 ID를 한 번에 프로젝트 멤버로 일괄 등록</li>
+            <li><code>remove_labeler(project_id, user_id)</code>: 프로젝트에서 라벨러 제거</li>
+        </ul>
+
+        <h4><span class="emoji">📊</span> 모니터링 및 데이터 처리</h4>
+        <ul>
+            <li><code>get_project_progress(project_id)</code>: 프로젝트 진행률, 태스크/어노테이션 통계, 라벨 타입별 카운트 조회</li>
+            <li><code>import_tasks(project_id, file_path, tasks, on_progress)</code>:
+                <ul>
+                    <li>개별 파일(JSON, CSV, TSV, TXT, ZIP 등) 업로드</li>
+                    <li><strong>폴더 입력 시 압축 없이 폴더 내 원본 파일들을 개별 순차 업로드</strong> (실시간 진행률 콜백 지원)</li>
+                </ul>
+            </li>
+            <li><code>download_tasks(project_id, output_dir, download_all, include_images, on_progress)</code>:
+                <ul>
+                    <li>태스크 JSON 데이터 및 원본 이미지 다운로드 후 <code>project-{id}-tasks.zip</code> 백업 파일 생성</li>
+                </ul>
+            </li>
+            <li><code>export_labels(project_id, export_format, output_dir, snapshot, include_images)</code>:
+                <ul>
+                    <li>지원 포맷(JSON, CSV, COCO, YOLO 등)으로 변환 후 로컬 저장</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>2.2 대화형 CLI 메뉴 구성 (<code>LabeloCLI</code>)</h3>
+<pre><code>══════════════════════════════════════════════════
+  📋 메인 메뉴
+══════════════════════════════════════════════════
+  [1]  내 정보 보기 (조직 ID, 조직명, 역할 확인)
+  [2]  프로젝트 목록 조회
+  [3]  📁 새 프로젝트 등록 (프로젝트명 입력으로 즉시 생성)
+  [4]  프로젝트 멤버(라벨러) 조회 (조직 ID 확인)
+  [5]  프로젝트에 라벨러 추가
+  [6]  프로젝트에서 라벨러 제거
+  [7]  전체 사용자 목록 (조직 ID, 역할 확인)
+  [8]  프로젝트에 추가 가능한 사용자 조회
+  [9]  여러 라벨러 일괄 추가 (쉼표 구분 ID 입력)
+  [10] 새 사용자 등록 (현재 조직에 초대 및 소속 변경)
+  [11] 🗑️  사용자 제거 (조직에서 멤버십 제거)
+  [12] 📊 프로젝트 작업 진행상황 모니터링
+  [13] 📥 프로젝트 데이터 Import (개별 파일 및 폴더 내 비압축 개별 업로드)
+  [14] 💾 프로젝트 데이터 다운로드 (백업 ZIP 생성)
+  [15] 📤 프로젝트 라벨링 데이터 Export (포맷 변환 및 다운로드)
+  [0]  종료</code></pre>
+
+        <h3>2.3 스크립트형 CLI 도구 (<code>labelo_api_example.py</code>)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>서브커맨드</th>
+                    <th>주요 인자</th>
+                    <th>설명</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>whoami</code></td>
+                    <td>-</td>
+                    <td>현재 사용자 및 조직 정보 조회</td>
+                </tr>
+                <tr>
+                    <td><code>list-projects</code></td>
+                    <td>-</td>
+                    <td>프로젝트 목록 조회</td>
+                </tr>
+                <tr>
+                    <td><code>create-project</code></td>
+                    <td><code>--title</code>, <code>--description</code></td>
+                    <td>새 프로젝트 생성</td>
+                </tr>
+                <tr>
+                    <td><code>list-users</code></td>
+                    <td>-</td>
+                    <td>조직 내 전체 사용자 조회</td>
+                </tr>
+                <tr>
+                    <td><code>list-members</code></td>
+                    <td><code>--project</code></td>
+                    <td>프로젝트 멤버 조회</td>
+                </tr>
+                <tr>
+                    <td><code>available-users</code></td>
+                    <td><code>--project</code></td>
+                    <td>추가 가능한 사용자 조회</td>
+                </tr>
+                <tr>
+                    <td><code>add-labeler</code></td>
+                    <td><code>--project</code>, <code>--user</code></td>
+                    <td>라벨러 1명 추가</td>
+                </tr>
+                <tr>
+                    <td><code>add-labelers</code></td>
+                    <td><code>--project</code>, <code>--users 1,2,3</code></td>
+                    <td>여러 라벨러 일괄 추가</td>
+                </tr>
+                <tr>
+                    <td><code>remove-labeler</code></td>
+                    <td><code>--project</code>, <code>--user</code></td>
+                    <td>라벨러 제거</td>
+                </tr>
+                <tr>
+                    <td><code>invite-user</code></td>
+                    <td><code>--invite-email</code>, <code>--invite-password</code>, <code>--invite-username</code>, <code>--role</code></td>
+                    <td>현재 조직에 사용자 등록</td>
+                </tr>
+                <tr>
+                    <td><code>delete-user</code></td>
+                    <td><code>--user</code></td>
+                    <td>사용자 제거 (조직에서 제거)</td>
+                </tr>
+                <tr>
+                    <td><code>project-progress</code></td>
+                    <td><code>--project</code></td>
+                    <td>진행률 및 통계 모니터링</td>
+                </tr>
+                <tr>
+                    <td><code>import-data</code></td>
+                    <td><code>--project</code>, <code>--file</code> (또는 <code>--json-data</code>)</td>
+                    <td>데이터 파일/폴더 Import</td>
+                </tr>
+                <tr>
+                    <td><code>download-tasks</code></td>
+                    <td><code>--project</code>, <code>--output-dir</code>, <code>--all</code>, <code>--no-images</code></td>
+                    <td>데이터 백업 다운로드</td>
+                </tr>
+                <tr>
+                    <td><code>export-labels</code></td>
+                    <td><code>--project</code>, <code>--format</code>, <code>--output-dir</code>, <code>--snapshot</code></td>
+                    <td>라벨 데이터 Export</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>3. 백엔드 버그 수정 및 개선 사항</h2>
+        <ol>
+            <li><strong>조직 멤버십 및 소속 조직 동기화 (<code><a href="file:///d:/_Dev/labelo_API/labelo/labelo/organizations/api.py#L393-L415">organizations/api.py</a></code>)</strong>:
+                <ul>
+                    <li>역할 변경 시 <code>status = 'active'</code>, <code>deleted_at = None</code>, <code>user.active_organization = org</code> 자동 반영</li>
+                </ul>
+            </li>
+            <li><strong>프로젝트 추가 가능 사용자 쿼리 수정 (<code><a href="file:///d:/_Dev/labelo_API/labelo/labelo/projects/api.py#L868-L886">projects/api.py</a></code>)</strong>:
+                <ul>
+                    <li>루프 내 exclude 덮어쓰기 버그를 제거하고 <code>OrganizationMember</code> 필터를 통해 active 멤버를 정확하게 조회</li>
+                </ul>
+            </li>
+            <li><strong>매니저 그룹 권한 추가 (<code><a href="file:///d:/_Dev/labelo_API/labelo/labelo/core/permissions.py#L145-L151">core/permissions.py</a></code>)</strong>:
+                <ul>
+                    <li><code>manager</code> 그룹에 조직 멤버 권한 부여</li>
+                </ul>
+            </li>
+            <li><strong>프론트엔드 그룹 렌더링 수정 (<code><a href="file:///d:/_Dev/labelo_API/labelo/labelo/templates/base.html#L98">templates/base.html</a></code>)</strong>:
+                <ul>
+                    <li>다중 그룹 시 발생하던 JavaScript SyntaxError 방지를 위해 문자열 래핑 포맷 적용</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2>4. API 엔드포인트 맵</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>기능</th>
+                    <th>HTTP</th>
+                    <th>엔드포인트</th>
+                    <th>설명</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>인증</strong></td>
+                    <td>GET/POST</td>
+                    <td><code>/user/login/</code></td>
+                    <td>세션 로그인 및 CSRF/Token 처리</td>
+                </tr>
+                <tr>
+                    <td><strong>사용자 정보</strong></td>
+                    <td>GET</td>
+                    <td><code>/api/current-user/whoami</code></td>
+                    <td>내 정보 조회</td>
+                </tr>
+                <tr>
+                    <td><strong>사용자 목록</strong></td>
+                    <td>GET</td>
+                    <td><code>/api/users/</code></td>
+                    <td>조직 사용자 목록 조회</td>
+                </tr>
+                <tr>
+                    <td><strong>사용자 수정/삭제</strong></td>
+                    <td>PATCH/DELETE</td>
+                    <td><code>/api/users/{id}/</code></td>
+                    <td>사용자 수정 / 삭제</td>
+                </tr>
+                <tr>
+                    <td><strong>조직 멤버 역할</strong></td>
+                    <td>PATCH</td>
+                    <td><code>/api/organizations/{org_id}/members/{user_id}</code></td>
+                    <td>역할 변경 및 멤버십 활성화</td>
+                </tr>
+                <tr>
+                    <td><strong>프로젝트 목록/생성</strong></td>
+                    <td>GET/POST</td>
+                    <td><code>/api/projects/</code></td>
+                    <td>프로젝트 목록 조회 및 새 프로젝트 생성</td>
+                </tr>
+                <tr>
+                    <td><strong>프로젝트 상세</strong></td>
+                    <td>GET/PATCH/DELETE</td>
+                    <td><code>/api/projects/{id}/</code></td>
+                    <td>프로젝트 상세 / 수정 / 삭제</td>
+                </tr>
+                <tr>
+                    <td><strong>프로젝트 멤버</strong></td>
+                    <td>GET/POST/DELETE</td>
+                    <td><code>/api/projects/{id}/members/</code></td>
+                    <td>멤버 목록 / 추가 / 삭제</td>
+                </tr>
+                <tr>
+                    <td><strong>추가 가능 사용자</strong></td>
+                    <td>GET</td>
+                    <td><code>/api/projects/{id}/users/</code></td>
+                    <td>추가 가능한 사용자 목록</td>
+                </tr>
+                <tr>
+                    <td><strong>데이터 Import</strong></td>
+                    <td>POST</td>
+                    <td><code>/api/projects/{id}/import</code></td>
+                    <td>파일 및 태스크 Import</td>
+                </tr>
+                <tr>
+                    <td><strong>데이터 Export</strong></td>
+                    <td>GET</td>
+                    <td><code>/api/projects/{id}/export?exportType=JSON</code></td>
+                    <td>라벨링 데이터 직접 다운로드</td>
+                </tr>
+                <tr>
+                    <td><strong>Export 스냅샷</strong></td>
+                    <td>POST/GET</td>
+                    <td><code>/api/projects/{id}/exports/</code></td>
+                    <td>스냅샷 생성 및 목록 조회</td>
+                </tr>
+                <tr>
+                    <td><strong>스냅샷 다운로드</strong></td>
+                    <td>GET</td>
+                    <td><code>/api/projects/{id}/exports/{export_pk}/download</code></td>
+                    <td>스냅샷 파일 다운로드</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>5. 검증 및 테스트 결과 (Verification)</h2>
+        <ul>
+            <li><strong>로그인 및 인증</strong>: 세션 로그인 및 API Token 발급/인증 정상 작동 확인</li>
+            <li><strong>프로젝트 생성</strong>: 메뉴 3번을 통한 프로젝트 명 입력 및 즉시 생성, 웹 설정 링크 연동 확인</li>
+            <li><strong>라벨러 관리</strong>: 프로젝트 멤버 조회, 추가 가능 사용자 조회(조직 ID 표시), 일괄 추가, 라벨러 제거 정상 작동 확인</li>
+            <li><strong>사용자 등록/제거</strong>: 신규 초대 등록 시 조직 소속 자동 전환 및 멤버 제거 정상 작동 확인</li>
+            <li><strong>비압축 데이터 Import</strong>: 메뉴 13번을 통해 <code>./images</code> 폴더 내 12개 이미지 파일을 원본 그대로 개별 업로드 및 22개 태스크 생성 확인 (소요시간 29.58초)</li>
+            <li><strong>데이터 다운로드 및 Export</strong>: JSON 태스크 데이터 및 원본 이미지 수집 ZIP 백업 파일 정상 생성 확인</li>
+        </ul>
+        
+        <div class="footer">
+            문서 작성일: 2026-08-24<br>
+            작성자: Antigravity AI Assistant
+        </div>
+    </div>
+</body>
+</html>
