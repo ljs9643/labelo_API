@@ -22,7 +22,7 @@
 
 ### 2.1 API 클라이언트 코어 (`LabeloAPIClient`)
 
-#### 🔐 인증 및 사용자/조직 관리
+#### 인증 및 사용자/조직 관리
 - `login(email, password)`: 로그인 페이지에서 CSRF 토큰을 추출하고 세션 인증을 거쳐 API Token 획득
 - `login_with_token(token)`: 발급된 토큰으로 직접 클라이언트 인증
 - `get_whoami()`: 현재 로그인된 사용자의 ID, 이름, 이메일, 활성 조직(`active_organization`) 정보 조회
@@ -34,19 +34,19 @@
 - `invite_user(email, password, username, role)`: 현재 관리자 조직에 사용자 가입/초대 및 소속 전환
 - `update_organization_member_role(org_id, user_id, role)`: 조직 내 역할(annotater, reviewer, manager 등) 변경 및 `status='active'` 활성화
 
-#### 📁 프로젝트 관리
+#### 프로젝트 관리
 - `list_projects(page, page_size)`: 프로젝트 목록 조회
 - `get_project(project_id)`: 프로젝트 상세 정보 조회
 - `create_project(title, description="")`: **프로젝트 이름만 입력하여 즉시 생성** (웹 인터페이스 설정 URL 안내)
 
-#### 👥 프로젝트 멤버(라벨러) 관리
+#### 프로젝트 멤버(라벨러) 관리
 - `get_project_members(project_id)`: 프로젝트에 등록된 라벨러 목록 조회
 - `get_available_users(project_id)`: 프로젝트에 아직 등록되지 않은 추가 가능 사용자 조회
 - `add_labeler(project_id, user_id)`: 프로젝트에 라벨러 1명 등록
 - `add_labelers_bulk(project_id, user_ids)`: 여러 사용자 ID를 한 번에 프로젝트 멤버로 일괄 등록
 - `remove_labeler(project_id, user_id)`: 프로젝트에서 라벨러 제거
 
-#### 📊 모니터링 및 데이터 처리
+#### 모니터링 및 데이터 처리
 - `get_project_progress(project_id)`: 프로젝트 진행률, 태스크/어노테이션 통계, 라벨 타입별 카운트 조회
 - `import_tasks(project_id, file_path, tasks, on_progress)`:
   - 개별 파일(JSON, CSV, TSV, TXT, ZIP 등) 업로드
