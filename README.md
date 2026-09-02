@@ -54,4 +54,6 @@ python labelo_api_example.py --email admin@test.com --password 1234 export-label
 * `labelo_api_client.py`: 메인 API 클라이언트 라이브러리 및 대화형 CLI (15가지 메뉴 지원)
 * `labelo_api_example.py`: 서브커맨드 기반 자동화 파이프라인 CLI 스크립트
 * `make_superuser.py`: 관리자 계정 생성 유틸리티 
-* `PROJECT_HISTORY.md`: 전체 프로젝트 개발 이력 및 백엔드 기능 개선 사항을 담은 히스토리 문서
+* `PROJECT_HISTORY.md`: 전체 프로젝트 개발 이력 및 백엔드 기능 개선 사항을 담은 히스토리 문서   
+
+## 구글 안티그래피티를 이용한 바이브코딩으로 작성된 프로젝트입니다.
