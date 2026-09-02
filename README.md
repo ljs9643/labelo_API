@@ -2,7 +2,7 @@
 
 LabelO 웹 시스템 외부에서 독립적인 Python 클라이언트 및 CLI를 통해 **조직, 사용자(라벨러/검수자/관리자), 프로젝트, 데이터(태스크 Import, Export, 백업 다운로드)**를 완벽하게 제어하기 위한 프로젝트입니다.
 
-## 📌 주요 기능
+## 1. 주요 기능
 
 ### 1. 사용자 및 조직 관리
 * **조직 기반 사용자 초대 및 등록**: 신규 사용자 등록 및 기존 타 조직 계정 초대, 조직 자동 전환
@@ -18,7 +18,7 @@ LabelO 웹 시스템 외부에서 독립적인 Python 클라이언트 및 CLI를
 * **데이터 Export 및 백업**: `JSON`, `CSV`, `TSV`, `COCO`, `YOLO`, `VOC` 등 다양한 포맷 변환 및 다운로드 지원
   * 이미지와 JSON 데이터를 포함한 완벽한 오프라인 백업 압축 파일(`zip`) 다운로드 기능 포함
 
-## 🚀 사용 방법
+## 2. 사용 방법
 
 이 프로젝트는 두 가지 방식의 CLI 인터페이스를 제공합니다.
 
@@ -49,7 +49,7 @@ python labelo_api_example.py --email admin@test.com --password 1234 download-tas
 python labelo_api_example.py --email admin@test.com --password 1234 export-labels --project 22 --format JSON
 ```
 
-## 📂 프로젝트 구조
+## 3. 프로젝트 구조
 
 * `labelo_api_client.py`: 메인 API 클라이언트 라이브러리 및 대화형 CLI (15가지 메뉴 지원)
 * `labelo_api_example.py`: 서브커맨드 기반 자동화 파이프라인 CLI 스크립트
