@@ -1,6 +1,6 @@
 # LabelO API Client & Management Tool
 
-LabelO 웹 시스템 외부에서 독립적인 Python 클라이언트 및 CLI를 통해 **조직, 사용자(라벨러/검수자/관리자), 프로젝트, 데이터(태스크 Import, Export, 백업 다운로드)**를 완벽하게 제어하기 위한 프로젝트입니다.
+LabelO 웹 시스템 외부에서 독립적인 Python 클라이언트 및 CLI를 통해 조직, 사용자(라벨러/검수자/관리자), 프로젝트, 데이터(태스크 Import, Export, 백업 다운로드)를 완벽하게 제어하기 위한 프로젝트입니다.
 
 ## 1. 주요 기능
 
